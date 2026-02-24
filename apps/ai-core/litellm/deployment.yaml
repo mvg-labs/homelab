@@ -6,10 +6,12 @@ metadata:
 spec:
   replicas: 1
   selector:
-    matchLabels: { app: litellm }
+    matchLabels:
+      app: litellm
   template:
     metadata:
-      labels: { app: litellm }
+      labels:
+        app: litellm
     spec:
       containers:
         - name: litellm
@@ -17,11 +19,19 @@ spec:
           command: ["/bin/sh", "-c"]
           args:
             - |
-              python3 -c "import socket; import time;
+              echo "Waiting for database to wake up..."
+              python3 -c "
+              import socket
+              import time
               while True:
                   try:
-                      with socket.create_connection(('localhost', 5432), timeout=1): break
-                  except OSError: time.sleep(1)"
+                      with socket.create_connection(('localhost', 5432), timeout=1):
+                          print('Database port is open!')
+                          break
+                  except OSError:
+                      time.sleep(1)
+              "
+              echo "Starting LiteLLM..."
               python3 main.py --config /app/config.yaml --port 4000 --host 0.0.0.0
           ports:
             - containerPort: 4000
@@ -45,16 +55,23 @@ spec:
         - name: db
           image: postgres:16-alpine
           env:
+            - name: PGDATA
+              value: /var/lib/postgresql/data/pgdata
             - name: POSTGRES_HOST_AUTH_METHOD
               value: trust
             - name: POSTGRES_DB
               value: litellm
+          securityContext:
+            runAsUser: 999
+            runAsGroup: 999
           volumeMounts:
             - name: db-data
               mountPath: /var/lib/postgresql/data
 
       volumes:
         - name: config
-          configMap: { name: litellm-config }
+          configMap:
+            name: litellm-config
         - name: db-data
-          persistentVolumeClaim: { claimName: litellm-db-pvc }
+          persistentVolumeClaim:
+            claimName: litellm-db-pvc
