@@ -21,12 +21,20 @@ spec:
           command: ["/bin/sh", "-c"]
           args:
             - |
-              python3 -c "import socket; import time;
+              echo "Waiting for database to wake up..."
+              python3 -c "
+              import socket
+              import time
               while True:
                   try:
-                      with socket.create_connection(('localhost', 5432), timeout=1): break
-                  except OSError: time.sleep(1)"
-              python3 main.py --config /app/config.yaml --port 4000 --host 0.0.0.0
+                      with socket.create_connection(('localhost', 5432), timeout=1):
+                          print('Database port is open!')
+                          break
+                  except OSError:
+                      time.sleep(1)
+              "
+              echo "Database is up! Starting LiteLLM Proxy..."
+              litellm --config /app/config.yaml --port 4000 --host 0.0.0.0
           ports:
             - containerPort: 4000
           env:
