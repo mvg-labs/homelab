@@ -11,7 +11,7 @@ spec:
     - match: Host(`ai.mvgates.com`)
       kind: Rule
       services:
-        - name: open-webui-service
-          port: 80
+        - name: open-webui
+          port: 8080
   tls:
     secretName: ai-mvgates-tls
