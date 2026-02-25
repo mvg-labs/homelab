@@ -13,48 +13,28 @@ spec:
     spec:
       securityContext:
         runAsNonRoot: true
-        seccompProfile: { type: RuntimeDefault }
         fsGroup: 999
       containers:
         - name: litellm
           image: ghcr.io/berriai/litellm:main-latest
-          securityContext:
-            allowPrivilegeEscalation: false
-            capabilities: { drop: ["ALL"] }
-            runAsUser: 1000
           command: ["/bin/sh", "-c"]
           args:
             - |
-              export HOME=/tmp
-              export XDG_CACHE_HOME=/tmp/.cache
-              export PRISMA_PY_BINARY_CACHE_DIR=/tmp/prisma-binaries
-              mkdir -p /tmp/.cache /tmp/prisma-binaries
-
-              echo "Fetching Prisma engines..."
-              python3 -m prisma py fetch
-
-              echo "Waiting for database..."
               python3 -c "import socket; import time;
               while True:
                   try:
                       with socket.create_connection(('127.0.0.1', 5432), timeout=1): break
                   except OSError: time.sleep(1)"
-
-              echo "Starting LiteLLM..."
               litellm --config /app/config.yaml --port 4000 --host 0.0.0.0
           env:
             - name: LITELLM_MODE
               value: "production"
             - name: STORE_MODEL_IN_DB
               value: "true"
-            - name: HOME
-              value: "/tmp"
-            - name: XDG_CACHE_HOME
-              value: "/tmp/.cache"
-            - name: PRISMA_PY_BINARY_CACHE_DIR
-              value: "/tmp/prisma-binaries"
             - name: UI_LOCAL_PROXY_ADMIN_ADDR
               value: "https://llmproxy.mvgates.com/ui"
+            - name: DATABASE_URL
+              value: "postgresql://postgres:postgres@127.0.0.1:5432/litellm?sslmode=disable"
             - name: OPENAI_API_KEY
               valueFrom:
                 secretKeyRef: { name: litellm-api-keys, key: openai_key }
@@ -64,21 +44,13 @@ spec:
             - name: LITELLM_MASTER_KEY
               valueFrom:
                 secretKeyRef: { name: litellm-api-keys, key: master_key }
-            - name: DATABASE_URL
-              value: "postgresql://postgres:postgres@127.0.0.1:5432/litellm?sslmode=disable"
           volumeMounts:
             - name: config
               mountPath: /app/config.yaml
               subPath: config.yaml
-            - name: tmp-dir
-              mountPath: /tmp
 
         - name: db
           image: postgres:16-alpine
-          securityContext:
-            allowPrivilegeEscalation: false
-            capabilities: { drop: ["ALL"] }
-            runAsUser: 999
           env:
             - name: POSTGRES_USER
               value: postgres
@@ -91,18 +63,9 @@ spec:
           volumeMounts:
             - name: db-data
               mountPath: /var/lib/postgresql/data
-              subPath: pgdata
-            - name: socket
-              mountPath: /var/run/postgresql
-            - name: tmp-dir
-              mountPath: /tmp
 
       volumes:
         - name: config
           configMap: { name: litellm-config }
         - name: db-data
           persistentVolumeClaim: { claimName: litellm-db-pvc }
-        - name: socket
-          emptyDir: {}
-        - name: tmp-dir
-          emptyDir: {}
