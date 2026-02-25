@@ -1,4 +1,14 @@
 apiVersion: traefik.io/v1alpha1
+kind: ServersTransport
+metadata:
+  name: webui-transport
+  namespace: management
+spec:
+  respondingTimeouts:
+    readTimeout: 600s
+    idleTimeout: 600s
+---
+apiVersion: traefik.io/v1alpha1
 kind: Middleware
 metadata:
   name: webui-streaming
@@ -8,16 +18,5 @@ spec:
     customResponseHeaders:
       X-Accel-Buffering: "no"
       Cache-Control: "no-cache, no-transform"
-      Connection: "keep-alive"
     customRequestHeaders:
       X-Forwarded-Proto: "https"
----
-apiVersion: traefik.io/v1alpha1
-kind: ServersTransport
-metadata:
-  name: webui-transport
-  namespace: management
-spec:
-  respondingTimeouts:
-    readTimeout: 300s
-    idleTimeout: 300s
