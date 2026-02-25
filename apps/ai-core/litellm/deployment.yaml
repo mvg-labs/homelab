@@ -12,18 +12,24 @@ spec:
       labels: { app: litellm }
     spec:
       securityContext:
-        runAsNonRoot: true
-        seccompProfile:
-          type: RuntimeDefault
         fsGroup: 999
+        runAsNonRoot: true
+        seccompProfile: { type: RuntimeDefault }
+
+      initContainers:
+        - name: fix-permissions
+          image: busybox:latest
+          command: ["sh", "-c", "chown -R 999:999 /var/lib/postgresql/data && chmod 700 /var/lib/postgresql/data"]
+          securityContext:
+            runAsUser: 0
+            allowPrivilegeEscalation: true
+          volumeMounts:
+            - name: db-data
+              mountPath: /var/lib/postgresql/data
+
       containers:
         - name: litellm
           image: ghcr.io/berriai/litellm:main-latest
-          securityContext:
-            allowPrivilegeEscalation: false
-            capabilities:
-              drop: ["ALL"]
-            runAsUser: 1000
           command: ["/bin/sh", "-c"]
           args:
             - |
@@ -62,9 +68,9 @@ spec:
           image: postgres:16-alpine
           securityContext:
             allowPrivilegeEscalation: false
-            capabilities:
-              drop: ["ALL"]
+            capabilities: { drop: ["ALL"] }
             runAsUser: 999
+            runAsGroup: 999
           env:
             - name: POSTGRES_USER
               value: postgres
@@ -78,9 +84,13 @@ spec:
             - name: db-data
               mountPath: /var/lib/postgresql/data
               subPath: pgdata
+            - name: socket
+              mountPath: /var/run/postgresql
 
       volumes:
         - name: config
-          configMap: { name: litellm-config }
+          configMap: { name: homepage-config }
         - name: db-data
           persistentVolumeClaim: { claimName: litellm-db-pvc }
+        - name: socket
+          emptyDir: {}
