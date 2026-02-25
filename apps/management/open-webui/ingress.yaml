@@ -3,15 +3,16 @@ kind: IngressRoute
 metadata:
   name: open-webui-web
   namespace: management
-  annotations:
-    cert-manager.io/cluster-issuer: letsencrypt-production
 spec:
   entryPoints: [websecure]
   routes:
     - match: Host(`ai.mvgates.com`)
       kind: Rule
+      middlewares:
+        - name: webui-headers
       services:
         - name: open-webui
           port: 8080
+          serversTransport: webui-transport
   tls:
     secretName: ai-mvgates-tls

@@ -28,6 +28,8 @@ spec:
               value: "true"
             - name: WEBUI_NAME
               value: "MvGates AI"
+            - name: WEBUI_URL
+              value: "https://ai.mvgates.com"
           volumeMounts:
             - name: data
               mountPath: /app/backend/data

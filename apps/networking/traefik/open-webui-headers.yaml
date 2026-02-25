@@ -1,0 +1,23 @@
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: webui-headers
+  namespace: management
+spec:
+  headers:
+    customRequestHeaders:
+      X-Forwarded-Proto: "https"
+    browserXssFilter: true
+    contentTypeNosniff: true
+    forceSTSHeader: true
+    stsSeconds: 31536000
+---
+apiVersion: traefik.io/v1alpha1
+kind: ServersTransport
+metadata:
+  name: webui-transport
+  namespace: management
+spec:
+  respondingTimeouts:
+    readTimeout: 300s
+    idleTimeout: 300s
