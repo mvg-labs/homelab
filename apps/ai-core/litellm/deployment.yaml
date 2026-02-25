@@ -15,8 +15,6 @@ spec:
         runAsNonRoot: true
         seccompProfile: { type: RuntimeDefault }
         fsGroup: 999
-        fsGroupChangePolicy: "OnRootMismatch"
-
       containers:
         - name: litellm
           image: ghcr.io/berriai/litellm:main-latest
@@ -27,11 +25,14 @@ spec:
           command: ["/bin/sh", "-c"]
           args:
             - |
+              # Wait for DB
               python3 -c "import socket; import time;
               while True:
                   try:
-                      with socket.create_connection(('localhost', 5432), timeout=1): break
+                      with socket.create_connection(('127.0.0.1', 5432), timeout=1): break
                   except OSError: time.sleep(1)"
+
+              echo "Database is up. Starting LiteLLM..."
               litellm --config /app/config.yaml --port 4000 --host 0.0.0.0
           env:
             - name: LITELLM_MODE
@@ -50,11 +51,14 @@ spec:
               valueFrom:
                 secretKeyRef: { name: litellm-api-keys, key: master_key }
             - name: DATABASE_URL
-              value: "postgresql://postgres:postgres@localhost:5432/litellm?sslmode=disable"
+              value: "postgresql://postgres:postgres@127.0.0.1:5432/litellm?sslmode=disable"
           volumeMounts:
             - name: config
               mountPath: /app/config.yaml
               subPath: config.yaml
+            - name: tmp-dir
+              mountPath: /tmp
+            # -----------------------------------
 
         - name: db
           image: postgres:16-alpine
@@ -77,6 +81,8 @@ spec:
               subPath: pgdata
             - name: socket
               mountPath: /var/run/postgresql
+            - name: tmp-dir
+              mountPath: /tmp
 
       volumes:
         - name: config
@@ -84,4 +90,6 @@ spec:
         - name: db-data
           persistentVolumeClaim: { claimName: litellm-db-pvc }
         - name: socket
+          emptyDir: {}
+        - name: tmp-dir
           emptyDir: {}
