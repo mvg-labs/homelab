@@ -20,17 +20,29 @@ spec:
           command: ["/bin/sh", "-c"]
           args:
             - |
+              # 1. Set temporary paths to the writable volume
+              export HOME=/tmp
+              export PRISMA_PY_BINARY_CACHE_DIR=/tmp/prisma-binaries
+
+              # 2. Wait for Postgres
               python3 -c "import socket; import time;
               while True:
                   try:
                       with socket.create_connection(('127.0.0.1', 5432), timeout=1): break
                   except OSError: time.sleep(1)"
+
+              # 3. Start LiteLLM
+              echo "Database is up. Starting LiteLLM..."
               litellm --config /app/config.yaml --port 4000 --host 0.0.0.0
           env:
             - name: LITELLM_MODE
               value: "production"
             - name: STORE_MODEL_IN_DB
               value: "true"
+            - name: HOME
+              value: "/tmp"
+            - name: PRISMA_PY_BINARY_CACHE_DIR
+              value: "/tmp/prisma-binaries"
             - name: UI_LOCAL_PROXY_ADMIN_ADDR
               value: "https://llmproxy.mvgates.com/ui"
             - name: DATABASE_URL
@@ -48,6 +60,8 @@ spec:
             - name: config
               mountPath: /app/config.yaml
               subPath: config.yaml
+            - name: temp-storage
+              mountPath: /tmp
 
         - name: db
           image: postgres:16-alpine
@@ -63,9 +77,12 @@ spec:
           volumeMounts:
             - name: db-data
               mountPath: /var/lib/postgresql/data
+              subPath: pgdata
 
       volumes:
         - name: config
           configMap: { name: litellm-config }
         - name: db-data
           persistentVolumeClaim: { claimName: litellm-db-pvc }
+        - name: temp-storage
+          emptyDir: {}
