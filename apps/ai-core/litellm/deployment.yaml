@@ -25,14 +25,22 @@ spec:
           command: ["/bin/sh", "-c"]
           args:
             - |
-              # Wait for DB
+              export HOME=/tmp
+              export XDG_CACHE_HOME=/tmp/.cache
+              export PRISMA_PY_BINARY_CACHE_DIR=/tmp/prisma-binaries
+              mkdir -p /tmp/.cache /tmp/prisma-binaries
+
+              echo "Fetching Prisma engines..."
+              python3 -m prisma py fetch
+
+              echo "Waiting for database..."
               python3 -c "import socket; import time;
               while True:
                   try:
                       with socket.create_connection(('127.0.0.1', 5432), timeout=1): break
                   except OSError: time.sleep(1)"
 
-              echo "Database is up. Starting LiteLLM..."
+              echo "Starting LiteLLM..."
               litellm --config /app/config.yaml --port 4000 --host 0.0.0.0
           env:
             - name: LITELLM_MODE
@@ -64,7 +72,6 @@ spec:
               subPath: config.yaml
             - name: tmp-dir
               mountPath: /tmp
-            # -----------------------------------
 
         - name: db
           image: postgres:16-alpine
