@@ -20,10 +20,13 @@ spec:
           env:
             - name: OPENAI_API_BASE_URL
               value: "http://litellm-service.ai-core.svc.cluster.local:4000/v1"
-            - name: OPENCLAW_HOST
+            - name: OPENCLAW_GATEWAY_HOST
               value: "0.0.0.0"
-            - name: OPENCLAW_PORT
-              value: "8000"
+            - name: OPENCLAW_GATEWAY_PORT
+              value: "18789"
+            - name: OPENCLAW_GATEWAY_TOKEN
+              valueFrom:
+                secretKeyRef: { name: openclaw-secrets, key: gateway_token }
             - name: OPENAI_API_KEY
               valueFrom:
                 secretKeyRef: { name: openclaw-secrets, key: virtual_key }
