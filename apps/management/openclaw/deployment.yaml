@@ -1,0 +1,54 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: openclaw
+  namespace: management
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: openclaw }
+  template:
+    metadata:
+      labels: { app: openclaw }
+    spec:
+      serviceAccountName: openclaw-sa
+      securityContext:
+        fsGroup: 4000
+      containers:
+        - name: openclaw
+          image: ghcr.io/openclaw/openclaw:latest
+          env:
+            - name: OPENAI_API_BASE_URL
+              value: "http://litellm-service.ai-core.svc.cluster.local:4000/v1"
+            - name: OPENAI_API_KEY
+              valueFrom:
+                secretKeyRef: { name: openclaw-secrets, key: virtual_key }
+            - name: GITHUB_TOKEN
+              valueFrom:
+                secretKeyRef: { name: openclaw-secrets, key: github_token }
+            - name: GIT_AUTHOR_NAME
+              value: "OpenClaw SRE"
+            - name: GIT_AUTHOR_EMAIL
+              value: "openclaw@mvgates.com"
+            - name: GIT_COMMITTER_NAME
+              value: "OpenClaw SRE"
+            - name: GIT_COMMITTER_EMAIL
+              value: "openclaw@mvgates.com"
+          volumeMounts:
+            - name: state
+              mountPath: /app/data
+            - name: brainbox
+              mountPath: /app/brainbox
+            - name: homelab-repo
+              mountPath: /app/homelab
+      volumes:
+        - name: state
+          persistentVolumeClaim: { claimName: openclaw-state-pvc }
+        - name: brainbox
+          nfs:
+            server: 192.168.120.4
+            path: /mnt/databox/lab/brainbox
+        - name: homelab-repo
+          nfs:
+            server: 192.168.120.4
+            path: /mnt/nas_soul/homelab
