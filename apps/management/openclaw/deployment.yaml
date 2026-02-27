@@ -15,33 +15,38 @@ spec:
       securityContext:
         fsGroup: 1000
       containers:
+        # --- CONTAINER 1: THE AGENT (The Brain) ---
         - name: openclaw
           image: ghcr.io/openclaw/openclaw:latest
+          # No command override here - let the image use its own entrypoint
           env:
-            - name: GATEWAY_HOST
-              value: "0.0.0.0"
-            - name: GATEWAY_PORT
-              value: "18789"
+            # 1. THE TRUST FIX: Tell the app to trust the Ambassador
+            - name: GATEWAY_TRUSTED_PROXIES
+              value: "127.0.0.1,10.0.0.0/8"
 
+            # 2. THE ORIGIN FIX: Match your domain exactly
             - name: GATEWAY_CONTROL_UI_ALLOWED_ORIGINS
-              value: "https://claw.mvgates.com,http://localhost:8000"
+              value: "https://claw.mvgates.com"
             - name: GATEWAY_CONTROL_UI_URL
               value: "https://claw.mvgates.com"
-            - name: GATEWAY_CONTROL_UI_ENABLED
-              value: "true"
 
-            - name: GATEWAY_TRUSTED_PROXIES
-              value: "10.244.0.0/16,127.0.0.1,192.168.0.0/16"
-
+            # 3. THE AUTH FIX: Use your permanent token
             - name: GATEWAY_AUTH_TOKEN
               valueFrom:
                 secretKeyRef: { name: openclaw-secrets, key: gateway_token }
 
+            # 4. THE MODEL FIX: Point to your LiteLLM Gemini
+            - name: GATEWAY_AGENT_PROVIDER
+              value: "openai"
+            - name: GATEWAY_AGENT_MODEL
+              value: "gemini-2.0-flash" # Match your LiteLLM model name
             - name: OPENAI_API_BASE_URL
               value: "http://litellm-service.ai-core.svc.cluster.local:4000/v1"
             - name: OPENAI_API_KEY
               valueFrom:
                 secretKeyRef: { name: openclaw-secrets, key: virtual_key }
+
+            # 5. GIT IDENTITY
             - name: GITHUB_TOKEN
               valueFrom:
                 secretKeyRef: { name: openclaw-secrets, key: github_token }
@@ -52,6 +57,15 @@ spec:
               mountPath: /app/brainbox
             - name: homelab-repo
               mountPath: /app/homelab
+
+        # --- CONTAINER 2: THE AMBASSADOR (The Bridge) ---
+        - name: ambassador
+          image: alpine/socat:latest
+          # This container listens on 8000 and whispers to the agent on 127.0.0.1
+          args: ["TCP-LISTEN:8000,fork,reuseaddr", "TCP:127.0.0.1:18789"]
+          ports:
+            - containerPort: 8000
+
       volumes:
         - name: state
           persistentVolumeClaim: { claimName: openclaw-state-pvc }
