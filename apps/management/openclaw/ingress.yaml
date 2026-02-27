@@ -26,4 +26,3 @@ spec:
     customRequestHeaders:
       X-Forwarded-Proto: "https"
       X-Forwarded-Host: "claw.mvgates.com"
-    proxyHeadersPort: 443

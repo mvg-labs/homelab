@@ -6,12 +6,11 @@ metadata:
 data:
   config.yml: |
     gateway:
-      host: "0.0.0.0"
+      host: "127.0.0.1"
       port: 18789
       trustedProxies:
         - "127.0.0.1"
         - "10.0.0.0/8"
-        - "10.244.0.0/16"
         - "192.168.0.0/16"
       controlUi:
         enabled: true
