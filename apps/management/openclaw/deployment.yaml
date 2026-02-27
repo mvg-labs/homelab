@@ -18,7 +18,11 @@ spec:
         - name: openclaw
           image: ghcr.io/openclaw/openclaw:latest
           env:
+            - name: OPENCLAW_GATEWAY_TRUSTED_PROXIES
+              value: "127.0.0.1,10.0.0.0/8,192.168.0.0/16"
             - name: OPENCLAW_GATEWAY_CONTROL_UI_ALLOWED_ORIGINS
+              value: "https://claw.mvgates.com,http://localhost:8000"
+            - name: OPENCLAW_GATEWAY_CONTROL_UI_URL
               value: "https://claw.mvgates.com"
             - name: OPENAI_API_KEY
               valueFrom:
