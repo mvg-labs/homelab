@@ -14,17 +14,13 @@ spec:
       serviceAccountName: openclaw-sa
       securityContext:
         fsGroup: 1000
-
       initContainers:
         - name: init-config
           image: busybox:latest
-          command: ["sh", "-c"]
-          args:
-            - |
-              mkdir -p /home/node/.openclaw
-              # We add 'dangerouslyDisableDeviceAuth: true' to bypass the pairing screen
-              echo '{"gateway":{"controlUi":{"enabled":true,"allowedOrigins":["https://claw.mvgates.com"],"dangerouslyAllowHostHeaderOriginFallback":true,"dangerouslyDisableDeviceAuth":true}}}' > /home/node/.openclaw/openclaw.json
-              chown -R 1000:1000 /home/node/.openclaw
+          command: ["sh", "-c", "mkdir -p /home/node/.openclaw && echo '{}' > /home/node/.openclaw/openclaw.json && chown -R 1000:1000 /home/node/.openclaw"]
+          volumeMounts:
+            - name: state
+              mountPath: /home/node/.openclaw
       containers:
         - name: openclaw
           image: ghcr.io/openclaw/openclaw:latest
@@ -38,6 +34,21 @@ spec:
           env:
             - name: HOME
               value: "/home/node"
+
+            # --- THE NESTED CONFIG OVERRIDES (Double Underscore Pattern) ---
+            # This satisfies: gateway.controlUi.dangerouslyAllowHostHeaderOriginFallback
+            - name: GATEWAY__CONTROL_UI__DANGEROUSLY_ALLOW_HOST_HEADER_ORIGIN_FALLBACK
+              value: "true"
+
+            # This satisfies: gateway.controlUi.allowedOrigins
+            - name: GATEWAY__CONTROL_UI__ALLOWED_ORIGINS
+              value: '["https://claw.mvgates.com"]'
+
+            # This satisfies: gateway.trustedProxies (Trust Traefik)
+            - name: GATEWAY__TRUSTED_PROXIES
+              value: '["127.0.0.1", "10.244.0.0/16"]'
+            # ---------------------------------------------------------------
+
             - name: OPENCLAW_GATEWAY_TOKEN
               valueFrom:
                 secretKeyRef: { name: openclaw-secrets, key: gateway_token }
@@ -46,9 +57,6 @@ spec:
             - name: OPENAI_API_KEY
               valueFrom:
                 secretKeyRef: { name: openclaw-secrets, key: virtual_key }
-            - name: GITHUB_TOKEN
-              valueFrom:
-                secretKeyRef: { name: openclaw-secrets, key: github_token }
           volumeMounts:
             - name: state
               mountPath: /home/node/.openclaw
