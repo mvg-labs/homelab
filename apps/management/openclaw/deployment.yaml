@@ -14,13 +14,20 @@ spec:
       serviceAccountName: openclaw-sa
       securityContext:
         fsGroup: 1000
+
       initContainers:
-        - name: init-config
+        - name: config-fixer
           image: busybox:latest
-          command: ["sh", "-c", "mkdir -p /home/node/.openclaw && echo '{}' > /home/node/.openclaw/openclaw.json && chown -R 1000:1000 /home/node/.openclaw"]
+          command: ["sh", "-c"]
+          args:
+            - |
+              mkdir -p /home/node/.openclaw
+              echo '{"gateway":{"trustedProxies":["127.0.0.1","10.0.0.0/8"],"controlUi":{"enabled":true,"allowedOrigins":["https://claw.mvgates.com"]}}}' > /home/node/.openclaw/openclaw.json
+              chown -R 1000:1000 /home/node/.openclaw
           volumeMounts:
             - name: state
               mountPath: /home/node/.openclaw
+
       containers:
         - name: openclaw
           image: ghcr.io/openclaw/openclaw:latest
@@ -33,9 +40,10 @@ spec:
               valueFrom:
                 secretKeyRef: { name: openclaw-secrets, key: gateway_token }
             - name: GATEWAY_TRUSTED_PROXIES
-              value: "127.0.0.1"
+              value: "127.0.0.1,10.0.0.0/8"
             - name: GATEWAY_CONTROL_UI_ALLOWED_ORIGINS
               value: "https://claw.mvgates.com"
+
             - name: OPENAI_API_BASE_URL
               value: "http://litellm-service.ai-core.svc.cluster.local:4000/v1"
             - name: OPENAI_API_KEY
@@ -54,15 +62,12 @@ spec:
           command: ["/bin/sh", "-c"]
           args:
             - |
-              echo "Starting Bridge..."
-              # Listens on 8000 (Cluster) -> Forwards to 127.0.0.1:18789 (Agent)
               while true; do
                 socat TCP-LISTEN:8000,fork,reuseaddr TCP:127.0.0.1:18789
                 sleep 2
               done
           ports:
             - containerPort: 8000
-
       volumes:
         - name: state
           persistentVolumeClaim: { claimName: openclaw-state-pvc }
