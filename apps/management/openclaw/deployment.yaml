@@ -13,11 +13,10 @@ spec:
     spec:
       serviceAccountName: openclaw-sa
       securityContext:
-        fsGroup: 4000
+        fsGroup: 1000
       containers:
         - name: openclaw
           image: ghcr.io/openclaw/openclaw:latest
-          args: ["run", "--config", "/app/config/config.yml"]
           env:
             - name: OPENAI_API_BASE_URL
               value: "http://litellm-service.ai-core.svc.cluster.local:4000/v1"
@@ -32,16 +31,19 @@ spec:
                 secretKeyRef: { name: openclaw-secrets, key: gateway_token }
           volumeMounts:
             - name: state
-              mountPath: /app/data
+              mountPath: /home/node/.openclaw
+            - name: config-volume
+              mountPath: /home/node/.openclaw/config.yml
+              subPath: config.yml
             - name: brainbox
               mountPath: /app/brainbox
             - name: homelab-repo
               mountPath: /app/homelab
-            - name: config-volume
-              mountPath: /app/config
       volumes:
         - name: state
           persistentVolumeClaim: { claimName: openclaw-state-pvc }
+        - name: config-volume
+          configMap: { name: openclaw-config }
         - name: brainbox
           nfs:
             server: 192.168.120.4
@@ -50,6 +52,3 @@ spec:
           nfs:
             server: 192.168.120.4
             path: /mnt/databox/mgmt/soul/homelab
-        - name: config-volume
-          configMap:
-            name: openclaw-config
