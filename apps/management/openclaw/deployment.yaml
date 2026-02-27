@@ -14,6 +14,23 @@ spec:
       serviceAccountName: openclaw-sa
       securityContext:
         fsGroup: 1000
+
+      initContainers:
+        - name: init-config
+          image: busybox:latest
+          command:
+            - sh
+            - -c
+            - |
+              mkdir -p /home/node/.openclaw
+              if [ ! -s /home/node/.openclaw/openclaw.json ]; then
+                echo "{}" > /home/node/.openclaw/openclaw.json
+              fi
+              chown -R 1000:1000 /home/node/.openclaw
+          volumeMounts:
+            - name: state
+              mountPath: /home/node/.openclaw
+
       containers:
         - name: openclaw
           image: ghcr.io/openclaw/openclaw:latest
@@ -48,12 +65,12 @@ spec:
           args:
             - |
               while true; do
-                # Listen on 8000, forward to Agent on 127.0.0.1
                 socat TCP-LISTEN:8000,fork,reuseaddr TCP:127.0.0.1:18789
                 sleep 2
               done
           ports:
             - containerPort: 8000
+
       volumes:
         - name: state
           persistentVolumeClaim: { claimName: openclaw-state-pvc }
