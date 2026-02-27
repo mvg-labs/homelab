@@ -18,10 +18,6 @@ spec:
         - name: openclaw
           image: ghcr.io/openclaw/openclaw:latest
           env:
-            # Tells the app to use our mounted config file
-            - name: OPENCLAW_CONFIG_PATH
-              value: "/app/config/openclaw.json"
-
             - name: OPENCLAW_GATEWAY_TOKEN
               valueFrom:
                 secretKeyRef: { name: openclaw-secrets, key: gateway_token }
@@ -33,8 +29,8 @@ spec:
           volumeMounts:
             - name: state
               mountPath: /home/node/.openclaw
-            - name: config-volume
-              mountPath: /app/config/openclaw.json
+            - name: config-file
+              mountPath: /home/node/.openclaw/openclaw.json
               subPath: openclaw.json
             - name: brainbox
               mountPath: /app/brainbox
@@ -55,8 +51,9 @@ spec:
       volumes:
         - name: state
           persistentVolumeClaim: { claimName: openclaw-state-pvc }
-        - name: config-volume
-          configMap: { name: openclaw-config }
+        - name: config-file
+          configMap:
+            name: openclaw-config
         - name: brainbox
           nfs:
             server: 192.168.120.4
