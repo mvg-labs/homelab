@@ -17,36 +17,40 @@ spec:
       containers:
         - name: openclaw
           image: ghcr.io/openclaw/openclaw:latest
+          # 1. Use ONLY the standard CLI flags that the binary recognizes
           command: ["node", "dist/index.js", "gateway"]
-          # --- THE SECURITY OVERRIDE ---
           args:
             - "--bind"
             - "lan"
             - "--port"
             - "18789"
             - "--allow-unconfigured"
-            # This is the magic flag from your error message:
-            - "--gateway.controlUi.dangerouslyAllowHostHeaderOriginFallback=true"
-            # This allows you to log in before the device is 'paired':
-            - "--gateway.controlUi.dangerouslyDisableDeviceAuth=true"
-          # -----------------------------
           env:
             - name: HOME
               value: "/home/node"
+
+            # 2. THE SECURITY BYPASS (Mapped from the suggested config keys)
+            - name: GATEWAY_CONTROL_UI_DANGEROUSLY_ALLOW_HOST_HEADER_ORIGIN_FALLBACK
+              value: "true"
+            - name: GATEWAY_CONTROL_UI_ALLOWED_ORIGINS
+              value: '["https://claw.mvgates.com"]' # Passed as a JSON array string
+            - name: GATEWAY_TRUSTED_PROXIES
+              value: '["127.0.0.1", "10.0.0.0/8"]' # Trust the cluster and loopback
+
+            # 3. AUTHENTICATION
             - name: OPENCLAW_GATEWAY_TOKEN
               valueFrom:
                 secretKeyRef: { name: openclaw-secrets, key: gateway_token }
 
-            # Trust the Traefik IP range
-            - name: GATEWAY_TRUSTED_PROXIES
-              value: "10.244.0.0/16,127.0.0.1"
-
-            # API & TOOLS
+            # 4. API & TOOLS
             - name: OPENAI_API_BASE_URL
               value: "http://litellm-service.ai-core.svc.cluster.local:4000/v1"
             - name: OPENAI_API_KEY
               valueFrom:
                 secretKeyRef: { name: openclaw-secrets, key: virtual_key }
+            - name: GITHUB_TOKEN
+              valueFrom:
+                secretKeyRef: { name: openclaw-secrets, key: github_token }
           volumeMounts:
             - name: state
               mountPath: /home/node/.openclaw
