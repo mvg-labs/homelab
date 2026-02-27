@@ -20,8 +20,8 @@ spec:
           command: ["/bin/sh", "-c"]
           args:
             - |
-              # Force the agent to listen to the cluster network
-              ./openclaw run --host 0.0.0.0 --port 18789
+              echo "Starting OpenClaw SRE Agent..."
+              openclaw run --host 0.0.0.0 --port 18789
           env:
             - name: OPENAI_API_BASE_URL
               value: "http://litellm-service.ai-core.svc.cluster.local:4000/v1"
