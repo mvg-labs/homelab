@@ -24,12 +24,6 @@ data:
             "primary": "gpt-4.1-nano"
           }
         }
-      },
-
-      "tools": {
-        "auth": {
-          "env": "LITELLM_API_KEY"
-        }
       }
     }
 
