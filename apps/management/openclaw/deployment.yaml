@@ -31,13 +31,13 @@ spec:
             - node
             - dist/index.js
             - gateway
-
           args:
             - --bind
             - lan
             - --port
             - "18789"
-
+            - --config
+            - /app/config/openclaw.json
           ports:
             - containerPort: 18789
 
