@@ -50,6 +50,12 @@ spec:
                   name: openclaw-secrets
                   key: virtual_key
 
+            - name: LITELLM_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: openclaw-secrets
+                  key: virtual_key
+
             - name: OPENCLAW_GATEWAY_TOKEN
               valueFrom:
                 secretKeyRef:
