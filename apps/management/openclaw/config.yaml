@@ -11,17 +11,11 @@ data:
         "bind": "lan",
         "port": 18789,
         "trustedProxies": ["10.244.0.0/16"],
-
         "controlUi": {
           "enabled": true,
           "allowedOrigins": [
             "https://claw.mvgates.com"
           ]
-        },
-
-        "pairing": {
-          "autoApprove": true
         }
       }
     }
-
