@@ -23,7 +23,6 @@ spec:
         - name: openclaw
           image: ghcr.io/openclaw/openclaw:latest
           imagePullPolicy: Always
-
           command: ["node", "dist/index.js", "gateway"]
           args:
             - "--bind"
@@ -38,9 +37,6 @@ spec:
           env:
             - name: HOME
               value: "/home/node"
-
-            - name: OPENCLAW_CONFIG
-              value: "/config/openclaw.json"
 
             - name: OPENCLAW_GATEWAY_TOKEN
               valueFrom:
@@ -58,12 +54,11 @@ spec:
                   key: virtual_key
 
           volumeMounts:
-            - name: state
+            - name: config
               mountPath: /home/node/.openclaw
 
-            - name: config
-              mountPath: /config
-              readOnly: true
+            - name: state
+              mountPath: /home/node/.openclaw-state
 
             - name: brainbox
               mountPath: /app/brainbox
@@ -86,13 +81,13 @@ spec:
             periodSeconds: 20
 
       volumes:
-        - name: state
-          persistentVolumeClaim:
-            claimName: openclaw-state-pvc
-
         - name: config
           configMap:
             name: openclaw-config
+
+        - name: state
+          persistentVolumeClaim:
+            claimName: openclaw-state-pvc
 
         - name: brainbox
           nfs:
