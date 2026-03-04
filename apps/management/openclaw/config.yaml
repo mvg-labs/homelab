@@ -11,18 +11,13 @@ data:
         "bind": "lan",
         "port": 18789,
         "trustedProxies": ["10.244.0.0/16"],
+
         "controlUi": {
           "enabled": true,
-          "allowedOrigins": ["https://claw.mvgates.com"],
+          "allowedOrigins": [
+            "https://claw.mvgates.com"
+          ],
           "dangerouslyAllowHostHeaderOriginFallback": false
-        }
-      },
-
-      "agents": {
-        "defaults": {
-          "model": {
-            "primary": "litellm/gpt-4.1-nano"
-          }
         }
       }
     }
