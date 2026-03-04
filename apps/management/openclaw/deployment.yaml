@@ -23,7 +23,7 @@ spec:
         - name: openclaw
           image: ghcr.io/openclaw/openclaw:latest
           imagePullPolicy: Always
-          command: ["node", "dist/index.js", "gateway"]
+
           command: ["node", "dist/index.js", "gateway"]
           args:
             - "--bind"
@@ -31,12 +31,16 @@ spec:
             - "--port"
             - "18789"
 
-        ports:
+          ports:
             - containerPort: 18789
+              name: http
 
           env:
             - name: HOME
               value: "/home/node"
+
+            - name: OPENCLAW_CONFIG
+              value: "/config/openclaw.json"
 
             - name: OPENCLAW_GATEWAY_TOKEN
               valueFrom:
@@ -58,8 +62,8 @@ spec:
               mountPath: /home/node/.openclaw
 
             - name: config
-              mountPath: /home/node/.openclaw/openclaw.json
-              subPath: openclaw.json
+              mountPath: /config
+              readOnly: true
 
             - name: brainbox
               mountPath: /app/brainbox
