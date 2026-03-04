@@ -106,4 +106,4 @@ spec:
       volumes:
         - name: config
           configMap:
-            name: openclaw-confi
+            name: openclaw-config
