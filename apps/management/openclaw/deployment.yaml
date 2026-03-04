@@ -54,11 +54,13 @@ spec:
                   key: virtual_key
 
           volumeMounts:
-            - name: config
+            - name: state
               mountPath: /home/node/.openclaw
 
-            - name: state
-              mountPath: /home/node/.openclaw-state
+            - name: config
+              mountPath: /home/node/.openclaw/openclaw.json
+              subPath: openclaw.json
+              readOnly: true
 
             - name: brainbox
               mountPath: /app/brainbox
@@ -67,27 +69,25 @@ spec:
               mountPath: /app/homelab
 
           readinessProbe:
-            httpGet:
-              path: /
+            tcpSocket:
               port: 18789
-            initialDelaySeconds: 10
+            initialDelaySeconds: 15
             periodSeconds: 10
 
           livenessProbe:
-            httpGet:
-              path: /
+            tcpSocket:
               port: 18789
             initialDelaySeconds: 30
             periodSeconds: 20
 
       volumes:
-        - name: config
-          configMap:
-            name: openclaw-config
-
         - name: state
           persistentVolumeClaim:
             claimName: openclaw-state-pvc
+
+        - name: config
+          configMap:
+            name: openclaw-config
 
         - name: brainbox
           nfs:
