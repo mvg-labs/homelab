@@ -9,8 +9,16 @@ kind: ClusterRole
 metadata:
   name: openclaw-observer
 rules:
-  - apiGroups: ["*"]
-    resources: ["pods", "services", "nodes", "events", "deployments", "statefulsets", "ingresses"]
+  - apiGroups: [""]
+    resources: ["pods", "services", "nodes", "events", "namespaces"]
+    verbs: ["get", "list", "watch"]
+
+  - apiGroups: ["apps"]
+    resources: ["deployments", "statefulsets", "daemonsets"]
+    verbs: ["get", "list", "watch"]
+
+  - apiGroups: ["networking.k8s.io"]
+    resources: ["ingresses"]
     verbs: ["get", "list", "watch"]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
@@ -25,3 +33,4 @@ subjects:
   - kind: ServiceAccount
     name: openclaw-sa
     namespace: management
+

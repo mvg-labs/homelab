@@ -4,8 +4,10 @@ metadata:
   name: openclaw-service
   namespace: management
 spec:
+  selector:
+    app: openclaw
   ports:
     - port: 80
       targetPort: 18789
-  selector:
-    app: openclaw
+      protocol: TCP
+

@@ -7,6 +7,9 @@ data:
   openclaw.json: |
     {
       "gateway": {
+        "bind": "0.0.0.0",
+        "port": 18789,
+        "trustedProxies": ["10.244.0.0/16"],
         "controlUi": {
           "enabled": true,
           "allowedOrigins": ["https://claw.mvgates.com"],
@@ -14,3 +17,4 @@ data:
         }
       }
     }
+

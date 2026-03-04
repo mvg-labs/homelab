@@ -6,72 +6,96 @@ metadata:
 spec:
   replicas: 1
   selector:
-    matchLabels: { app: openclaw }
+    matchLabels:
+      app: openclaw
   template:
     metadata:
-      labels: { app: openclaw }
+      labels:
+        app: openclaw
     spec:
       serviceAccountName: openclaw-sa
       securityContext:
-        fsGroup: 1000
-      initContainers:
-        - name: init-config
-          image: busybox:latest
-          command: ["sh", "-c", "mkdir -p /home/node/.openclaw && echo '{}' > /home/node/.openclaw/openclaw.json && chown -R 1000:1000 /home/node/.openclaw"]
-          volumeMounts:
-            - name: state
-              mountPath: /home/node/.openclaw
+        runAsUser: 4000
+        runAsGroup: 4000
+        fsGroup: 4000
+
       containers:
         - name: openclaw
           image: ghcr.io/openclaw/openclaw:latest
+          imagePullPolicy: Always
           command: ["node", "dist/index.js", "gateway"]
           args:
             - "--bind"
-            - "lan"
+            - "0.0.0.0"
             - "--port"
             - "18789"
-            - "--allow-unconfigured"
+
+          ports:
+            - containerPort: 18789
+
           env:
             - name: HOME
               value: "/home/node"
 
-            # --- THE NESTED CONFIG OVERRIDES (Double Underscore Pattern) ---
-            # This satisfies: gateway.controlUi.dangerouslyAllowHostHeaderOriginFallback
-            - name: GATEWAY__CONTROL_UI__DANGEROUSLY_ALLOW_HOST_HEADER_ORIGIN_FALLBACK
-              value: "true"
-
-            # This satisfies: gateway.controlUi.allowedOrigins
-            - name: GATEWAY__CONTROL_UI__ALLOWED_ORIGINS
-              value: '["https://claw.mvgates.com"]'
-
-            # This satisfies: gateway.trustedProxies (Trust Traefik)
-            - name: GATEWAY__TRUSTED_PROXIES
-              value: '["127.0.0.1", "10.244.0.0/16"]'
-            # ---------------------------------------------------------------
-
             - name: OPENCLAW_GATEWAY_TOKEN
               valueFrom:
-                secretKeyRef: { name: openclaw-secrets, key: gateway_token }
+                secretKeyRef:
+                  name: openclaw-secrets
+                  key: gateway_token
+
             - name: OPENAI_API_BASE_URL
               value: "http://litellm-service.ai-core.svc.cluster.local:4000/v1"
+
             - name: OPENAI_API_KEY
               valueFrom:
-                secretKeyRef: { name: openclaw-secrets, key: virtual_key }
+                secretKeyRef:
+                  name: openclaw-secrets
+                  key: virtual_key
+
           volumeMounts:
             - name: state
               mountPath: /home/node/.openclaw
+
+            - name: config
+              mountPath: /home/node/.openclaw/openclaw.json
+              subPath: openclaw.json
+
             - name: brainbox
               mountPath: /app/brainbox
+
             - name: homelab-repo
               mountPath: /app/homelab
+
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 18789
+            initialDelaySeconds: 10
+            periodSeconds: 10
+
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 18789
+            initialDelaySeconds: 30
+            periodSeconds: 20
+
       volumes:
         - name: state
-          persistentVolumeClaim: { claimName: openclaw-state-pvc }
+          persistentVolumeClaim:
+            claimName: openclaw-state-pvc
+
+        - name: config
+          configMap:
+            name: openclaw-config
+
         - name: brainbox
           nfs:
             server: 192.168.120.4
             path: /mnt/databox/lab/brainbox
+
         - name: homelab-repo
           nfs:
             server: 192.168.120.4
             path: /mnt/databox/mgmt/soul/homelab
+
