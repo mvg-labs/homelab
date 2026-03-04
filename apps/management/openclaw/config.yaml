@@ -17,5 +17,12 @@ data:
             "https://claw.mvgates.com"
           ]
         }
+      },
+
+      "agents": {
+        "defaults": {
+          "model": "litellm/gpt-4.1-nano"
+        }
       }
     }
+
