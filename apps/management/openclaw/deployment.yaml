@@ -38,7 +38,6 @@ spec:
             - containerPort: 18789
 
           env:
-
             - name: HOME
               value: /data
 
@@ -48,10 +47,7 @@ spec:
             - name: OPENCLAW_WORKSPACE_DIR
               value: /data/workspace
 
-            - name: OPENAI_API_BASE
-              value: https://llmproxy.mvgates.com/v1
-
-            - name: OPENCLAW_PROXY_TOKEN
+            - name: LITELLM_API_KEY
               valueFrom:
                 secretKeyRef:
                   name: openclaw-secrets
@@ -62,6 +58,7 @@ spec:
                 secretKeyRef:
                   name: openclaw-secrets
                   key: gateway_token
+
 
           volumeMounts:
             - name: openclaw-data
@@ -79,4 +76,3 @@ spec:
         - name: config
           configMap:
             name: openclaw-config
-
