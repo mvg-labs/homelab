@@ -3,14 +3,20 @@ kind: ConfigMap
 metadata:
   name: openclaw-config
   namespace: management
+
 data:
   openclaw.json: |
     {
       "gateway": {
         "mode": "local",
-        "bind": "0.0.0.0",
+        "bind": "lan",
         "port": 18789,
-        "trustedProxies": ["10.0.0.0/8","10.244.0.0/16"],
+
+        "trustedProxies": [
+          "10.0.0.0/8",
+          "10.244.0.0/16"
+        ],
+
         "controlUi": {
           "enabled": true,
           "allowedOrigins": [
@@ -21,7 +27,9 @@ data:
 
       "agents": {
         "defaults": {
-          "model": "gpt-4.1-nano"
+          "model": {
+            "primary": "litellm/gpt-4.1-nano"
+          }
         }
       }
     }
