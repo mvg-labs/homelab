@@ -25,10 +25,31 @@ data:
         }
       },
 
+      "models": {
+        "providers": {
+          "litellm": {
+            "baseUrl": "http://litellm.ai-core.svc.cluster.local:4000",
+            "apiKey": "${LITELLM_API_KEY}",
+            "api": "openai-completions",
+
+            "models": [
+              {
+                "id": "gpt-4.1-nano",
+                "name": "GPT-4.1 Nano",
+                "reasoning": false,
+                "input": ["text"],
+                "contextWindow": 128000,
+                "maxTokens": 8192
+              }
+            ]
+          }
+        }
+      },
+
       "agents": {
         "defaults": {
           "model": {
-            "primary": "gpt-4.1-nano"
+            "primary": "litellm/gpt-4.1-nano"
           }
         }
       }
