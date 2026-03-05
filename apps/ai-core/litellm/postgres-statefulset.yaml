@@ -20,35 +20,61 @@ spec:
     spec:
       securityContext:
         fsGroup: 1001
+        runAsNonRoot: true
 
       containers:
         - name: postgres
-          image: bitnami/postgresql:16
+          image: postgres:16-alpine
+          imagePullPolicy: IfNotPresent
 
           ports:
             - containerPort: 5432
 
           env:
-            - name: POSTGRESQL_USERNAME
+            - name: POSTGRES_USER
               value: postgres
 
-            - name: POSTGRESQL_PASSWORD
+            - name: POSTGRES_PASSWORD
               value: postgres
 
-            - name: POSTGRESQL_DATABASE
+            - name: POSTGRES_DB
               value: litellm
 
+            - name: PGDATA
+              value: /var/lib/postgresql/data/pgdata
+
           securityContext:
-            runAsUser: 1001
-            runAsGroup: 1001
+            allowPrivilegeEscalation: false
+            runAsUser: 999
+            runAsGroup: 999
 
           volumeMounts:
-            - name: pg-data
-              mountPath: /bitnami/postgresql
+            - name: postgres-data
+              mountPath: /var/lib/postgresql/data
 
-  volumeClaimTemplates: []
-  volumes:
-    - name: pg-data
-      persistentVolumeClaim:
-        claimName: litellm-db-pvc
+          readinessProbe:
+            tcpSocket:
+              port: 5432
+            initialDelaySeconds: 20
+            periodSeconds: 10
+
+          livenessProbe:
+            tcpSocket:
+              port: 5432
+            initialDelaySeconds: 40
+            periodSeconds: 20
+
+  volumeClaimTemplates:
+    - metadata:
+        name: postgres-data
+
+      spec:
+        accessModes:
+          - ReadWriteOnce
+
+        storageClassName: ceph-block
+
+        resources:
+          requests:
+            storage: 5Gi
 
