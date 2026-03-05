@@ -71,6 +71,9 @@ spec:
             - name: OPENCLAW_AGENT_MODEL
               value: "litellm/gpt-4.1-nano"
 
+            - name: GATEWAY_CONTROLUI_DANGEROUSLY_ALLOW_HOST_HEADER_ORIGIN_FALLBACK
+              value: "true"
+
             - name: OPENCLAW_GATEWAY_TOKEN
               valueFrom:
                 secretKeyRef:
