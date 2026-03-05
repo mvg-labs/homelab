@@ -10,7 +10,7 @@ data:
       "gateway": {
           "mode": "local",
           "bind": "lan",
-          "port": 18789,
+          "port": 18789
 
           "trustedProxies": [
             "10.0.0.0/8",
