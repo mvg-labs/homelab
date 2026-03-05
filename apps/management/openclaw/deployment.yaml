@@ -49,9 +49,6 @@ spec:
             - name: OPENCLAW_WORKSPACE_DIR
               value: /data/workspace
 
-            - name: OPENAI_API_BASE
-              value: http://litellm-service.ai-core.svc.cluster.local:4000
-
             - name: LITELLM_API_KEY
               valueFrom:
                 secretKeyRef:
